@@ -21,6 +21,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 
 	double *x_sym;
 	double *n_display;
+
+	double *no_slayer;
 	
 	int m0, n0, m1, n1, m2, n2;
 	mwSize *dim0, *dim1, *dim2;
@@ -74,7 +76,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	x_sym      = mxGetPr(prhs[16]);
 	n_display  = mxGetPr(prhs[17]);
 
-	
+	no_slayer  = mxGetPr(prhs[18]);
 
 	/* create output arguments */
     plhs[0] = mxCreateNumericArray(3, dim0, mxDOUBLE_CLASS, mxREAL);
@@ -151,6 +153,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 
     	// cout << slp[0] << " " << slp[1] << " " << slp[2] << " " << slp[3] << endl;
 
+	if (*no_slayer < 1.0) {
     	for (int w = 0; w < 3; w++) {
 
     		// vertical walls
@@ -170,6 +173,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
     		}
 
     	}
+	}
 
     	/* update C */
 
