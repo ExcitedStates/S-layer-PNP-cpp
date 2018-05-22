@@ -8,7 +8,7 @@ void readBinHeader( string filename,
 
 		int mode = -1;
 		FILE *file;
-		char filename_char[20];
+		char filename_char[100];
 		strcpy(filename_char, filename.c_str());
 		file = fopen(filename_char , "rb");
 
@@ -51,9 +51,10 @@ void readBin( string filename, const int n_i,
 		int mode = -1;
 		int t_offset = -1;
 		FILE *file;
-		char filename_char[20];
+		char filename_char[100];
 		strcpy(filename_char, filename.c_str());
 		file = fopen(filename_char , "rb");
+		cout << "opened " << filename_char << endl;
 
 		/* read header */
 		fread(&mode, sizeof(int), 1, file);
@@ -148,7 +149,7 @@ void writeBin( string filename, const int n_i, int t_offset,
 		int mode = 0;
 		int t = -1;
 		FILE *file;
-		char filename_char[20];
+		char filename_char[100];
 		strcpy(filename_char, filename.c_str());
 		file = fopen(filename_char , "wb");
 
