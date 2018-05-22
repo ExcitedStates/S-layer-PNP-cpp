@@ -162,12 +162,27 @@ dqq = pi/180 * dq;
 C_top = C(1,:,:,:);
 
 
-%% Run
+%% ready to run
 
 C0 = C;
 filename = [tag '_' int0str(kr,4) '_' int0str(1e4*ex_sig,5) '_' int0str(1e4*ey_sig,5) '_' int0str(1e11*r_pore, 4) '_' int0str(1e9*c_nh4, 6)];
 
 disp(filename);
+
+%% test mat2bin
+
+a = (dt*faraday/eps);
+b = faraday/rc/tmp;
+c = kr * dt / km / (6e23) / (0.25*dx^3*pi);
+        
+rst = mat2bin( 'test', 0, C, Ez, Er, Eq, Jz, Jr, Jq, ...
+                  charges, d_m, dqq, dx, dt, R, ...
+                  a, b, c, C0(1,:,:,:), nz_amo, 1, ...
+                  [nz_stop, nz_sbtm, nx_protein], n_display);
+              
+rst
+
+%% a continued run?
 
 if cont && exist([filename '.mat'], 'file') == 2
     sim_time0 = sim_time;
@@ -184,6 +199,7 @@ else
 end
     
 
+%% solver
 
 tic;
 
