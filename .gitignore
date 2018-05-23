@@ -1,3 +1,6 @@
 *.out
 *.err
 *.mat
+*.pnl
+*.mex*
+
