@@ -77,7 +77,7 @@ void readBin( string filename, const int n_i,
 		/* read C profile */
 		int size0 = 0;
 		size0 = *m0 * *n0 * *l0 * n_i;
-		cout << "C has " << size0 << " elements." << endl;
+		// cout << "C has " << size0 << " elements." << endl;
 		fread(C, sizeof(double), size0, file);
 
 		/* read E profiles */
@@ -174,32 +174,32 @@ void writeBin( string filename, const int n_i, int t_offset,
 		/* write C profile */
 		int size0 = 0;
 		size0 = *m0 * *n0 * *l0 * n_i;
-		cout << "C has " << size0 << " elements." << endl;
+		// cout << "C has " << size0 << " elements." << endl;
 		fwrite(C, sizeof(double), size0, file);
 
 		/* write E profiles */
 		int size1 = 0;
 		size1 = *m1 * *n1 * *l1;
-		cout << "Ez has " << size1 << " elements." << endl;
+		// cout << "Ez has " << size1 << " elements." << endl;
 		fwrite(Ez, sizeof(double), size1, file);
 		int size2 = 0;
 		size2 = *m2 * *n2 * *l2;
-		cout << "Er has " << size2 << " elements." << endl;
+		// cout << "Er has " << size2 << " elements." << endl;
 		fwrite(Er, sizeof(double), size2, file);
 		int size3 = 0;
 		size3 = *m3 * *n3 * *l3;
-		cout << "Eq has " << size3 << " elements." << endl;
+		// cout << "Eq has " << size3 << " elements." << endl;
 		fwrite(Eq, sizeof(double), size3, file);
 
 		/* write J profiles */
 		size1 = *m1 * *n1 * *l1 * n_i;
-		cout << "Jz has " << size1 << " elements." << endl;
+		// cout << "Jz has " << size1 << " elements." << endl;
 		fwrite(Jz, sizeof(double), size1, file);
 		size2 = *m2 * *n2 * *l2 * n_i;
-		cout << "Jr has " << size2 << " elements." << endl;
+		// cout << "Jr has " << size2 << " elements." << endl;
 		fwrite(Jr, sizeof(double), size2, file);
 		size3 = *m3 * *n3 * *l3 * n_i;
-		cout << "Jq has " << size3 << " elements." << endl;
+		// cout << "Jq has " << size3 << " elements." << endl;
 		fwrite(Jq, sizeof(double), size3, file);
 
 		fclose(file);

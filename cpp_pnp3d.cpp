@@ -16,6 +16,8 @@ const int n_i = 3;
 int main(int argc, char *argv[]) {
 
 	int n_t = 1;
+	int n_save = 0;
+	ostringstream number_stream;
 
 	/* check args */
 	if (argc < 2) {
@@ -26,6 +28,11 @@ int main(int argc, char *argv[]) {
 			cout << "No time step number provided, will only run 1 step." << endl;
 		} else {
 			n_t = atoi( argv[2] );
+			if (argc > 3) {
+				n_save = atoi( argv[3] );
+			} else {
+				n_save = 100;
+			}
 		}
 	}
 
@@ -106,16 +113,27 @@ int main(int argc, char *argv[]) {
 		t_eta = 0.1 * round( 10 * (t2-t0)/(t+1.0)*(n_tt-t-1.0));
 		cout << "step " << ((t+1) * *n_display) << " done in " << 0.1*round(10*(t2-t1)) << " s. ";
 		cout << t_eta << "s to go..." << endl;
+
+		/* save intermediate result */
+		if ((t+1) % n_save == 0) {
+			if ((t+1) == n_tt) {
+				cout << "saving final result... ";
+			} else {
+				cout << "saving intermediate result... ";
+			}
+			t_offset += n_save * *n_display;
+			/* write all variables */
+			number_stream.str("");
+			number_stream << t_offset;
+			filename = filename.substr( 0, filename.length()-(5+(int)floor(log10(t_offset))) ) + number_stream.str() + ".pnl";
+			writeBin( filename, n_i, t_offset,
+				C, Ez, Er, Eq, Jz, Jr, Jq,
+				&m0, &n0, &l0, &m1, &n1, &l1, &m2, &n2, &l2, &m3, &n3, &l3 );
+			cout << "done!" << endl;
+		}
 	}
 
-	t_offset += n_t;
-	/* write all variables */
-	ostringstream number_stream;
-	number_stream << t_offset;
-	filename = filename.substr( 0, filename.length()-13 ) + number_stream.str() + ".pnl";
-	writeBin( filename, n_i, t_offset,
-		C, Ez, Er, Eq, Jz, Jr, Jq,
-		&m0, &n0, &l0, &m1, &n1, &l1, &m2, &n2, &l2, &m3, &n3, &l3 );
+	cout << "simulation concluded" << endl;
 
 	return 0;
 
