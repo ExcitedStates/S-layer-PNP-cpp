@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <cmath>
 #include <ctime>
 #include <cstring>
@@ -85,7 +86,7 @@ int main(int argc, char *argv[]) {
 	/* read all variables */
 	readBin( argv[1], n_i, C, Ez, Er, Eq, Jz, Jr, Jq,
 		&m0, &n0, &l0, &m1, &n1, &l1, &m2, &n2, &l2, &m3, &n3, &l3, z, d_m,
-	 	dqq, dx, dt, R, a, b, c, bulk, amo_z, amo_r, slp, n_display );
+	 	dqq, dx, dt, R, a, b, c, bulk , amo_z, amo_r, slp, n_display );
 
 	/* do the PNP business */
 	if (n_t < *n_display) {
@@ -109,8 +110,9 @@ int main(int argc, char *argv[]) {
 
 	t_offset += n_t;
 	/* write all variables */
-	string number_char = to_string(t_offset);
-	filename = filename.substr( 0, filename.length()-13 ) + number_char + ".pnl";
+	ostringstream number_stream;
+	number_stream << t_offset;
+	filename = filename.substr( 0, filename.length()-13 ) + number_stream.str() + ".pnl";
 	writeBin( filename, n_i, t_offset,
 		C, Ez, Er, Eq, Jz, Jr, Jq,
 		&m0, &n0, &l0, &m1, &n1, &l1, &m2, &n2, &l2, &m3, &n3, &l3 );
