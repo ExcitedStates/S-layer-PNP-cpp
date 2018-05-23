@@ -55,7 +55,8 @@ int main(int argc, char *argv[]) {
 	time_t t0, t1, t2;
 
 	/* parse profile dimensions */
-	readBinHeader( argv[1], &t_offset,
+	string filename = argv[1];
+	readBinHeader( filename, &t_offset,
 		&m0, &n0, &l0, &m1, &n1, &l1, &m2, &n2, &l2, &m3, &n3, &l3 );
 
 	/* declare arrays */
@@ -108,7 +109,8 @@ int main(int argc, char *argv[]) {
 
 	t_offset += n_t;
 	/* write all variables */
-	string filename = "results.pnl";
+	string number_char = to_string(t_offset);
+	filename = filename.substr( 0, filename.length()-13 ) + number_char + ".pnl";
 	writeBin( filename, n_i, t_offset,
 		C, Ez, Er, Eq, Jz, Jr, Jq,
 		&m0, &n0, &l0, &m1, &n1, &l1, &m2, &n2, &l2, &m3, &n3, &l3 );

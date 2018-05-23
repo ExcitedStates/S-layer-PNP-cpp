@@ -175,7 +175,7 @@ a = (dt*faraday/eps);
 b = faraday/rc/tmp;
 c = kr * dt / km / (6e23) / (0.25*dx^3*pi);
         
-rst = mat2bin( 'test', 0, C, Ez, Er, Eq, Jz, Jr, Jq, ...
+rst = mat2bin( filename, 0, C, Ez, Er, Eq, Jz, Jr, Jq, ...
                   charges, d_m, dqq, dx, dt, R, ...
                   a, b, c, C0(1,:,:,:), nz_amo, 1, ...
                   [nz_stop, nz_sbtm, nx_protein], n_display);
@@ -206,6 +206,7 @@ tic;
 if enable_mex
     
     n_tt = ceil(n_t/n_display);
+    
     if cont == 1
         try 
             c_dtr = [c_dtr zeros(3, n_tt)];
