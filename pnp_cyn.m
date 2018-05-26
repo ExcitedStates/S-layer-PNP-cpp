@@ -3,6 +3,7 @@ function [C, C0, c_convs, c_detector, Jr, Jz, Jq, Er, Ez, Eq] = pnp_cyn(varargin
 % sim_time, pnp, movie, kr, ex_sig, ey_sig, r_pore, c_nh4
 
 v3 = 1;
+mm = 0;
 
 p = inputParser;
 p.addParameter('tag', 'results_pnp_cyn');
@@ -22,6 +23,7 @@ p.addParameter('cont', 0);
 p.addParameter('dq', 10);
 p.addParameter('dt', 1e-12);
 p.addParameter('z_amo', 30e-9);
+p.addParameter('c_limit', 20e-9);
 p.parse(varargin{:});
 
 tag = p.Results.tag;
@@ -40,6 +42,7 @@ cont = p.Results.cont;
 dq = p.Results.dq;
 dt = p.Results.dt;
 z_amo = p.Results.z_amo;
+c_limit = p.Results.c_limit;
 
 
 % dt = 1e-12; % ps
@@ -299,7 +302,13 @@ else
         C( C < 0 ) = 0;
 
         % reaction
-        C(nz_amo, 1, :, 1) = C(nz_amo, 1, :, 1) - kr * dt / km / (6e23) / (0.25*dx^3*pi) * C(nz_amo, 1, :, 1); 
+        if mm == 1
+            C(nz_amo, 1, :, 1) = C(nz_amo, 1, :, 1) ...
+                - abs(kr * dt / (6e23) / (0.25*dx^3*pi) * C(nz_amo, 1, :, 1) ...
+                / ( 1 + C(nz_amo, 1, :, 1) / km  ) ); 
+        else
+            C(nz_amo, 1, :, 1) = C(nz_amo, 1, :, 1) - kr * dt / km / (6e23) / (0.25*dx^3*pi) * C(nz_amo, 1, :, 1); 
+        end
 
         % stats
         c_conv = sum(abs(Cprev(:)-C(:))) / sum(abs(Cprev(:)));
