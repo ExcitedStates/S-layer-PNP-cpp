@@ -1,5 +1,5 @@
 function [C, Ez, Er, Eq, Jz, Jr, Jq, charges, d_m, ... 
-    dqq, dx, dt, R, a, b, c,bulk, nz_amo, nr_amo, slp, n_display] = bin2mat(filename)
+    dqq, dx, dt, R, a, b, c, km, bulk, nz_amo, nr_amo, slp, n_display, t_after] = bin2mat(filename)
 
 n_i = 3;
 
@@ -74,10 +74,11 @@ R = reshape( R, [shapes0(1:2) (shapes0(3)+1)]);
 
 %% read coefficients
 
-data = fread(fid, 3, 'double');
+data = fread(fid, 4, 'double');
 a = data(1);
 b = data(2);
 c = data(3);
+km = data(4);
 
 %% write bulk
 
@@ -86,11 +87,12 @@ bulk = reshape( bulk, [1 shapes0(2:3) n_i] );
 
 %% write misc.
 
-data = fread(fid, 6, 'double');
+data = fread(fid, 7, 'double');
 nz_amo = data(1);
 nr_amo = data(2);
 slp = data(3:5);
 n_display = data(6);
+t_after = data(7);
 
 %% close file
 

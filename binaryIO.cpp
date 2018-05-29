@@ -45,8 +45,9 @@ void readBin( string filename, const int n_i,
 	int* m3, int* n3, int* l3,
 	double *z, double *d_m,
 	double *dqq, double *dx, double *dt, double *R,
-	double *a, double *b, double *c,
-	double *bulk, double *amo_z, double *amo_r, double *slp, double *n_display ) {
+	double *a, double *b, double *c, double *km,
+	double *bulk, double *amo_z, double *amo_r, double *slp,
+	double *n_display, double *t_after ) {
 
 		int mode = -1;
 		int t_offset = -1;
@@ -121,6 +122,7 @@ void readBin( string filename, const int n_i,
 		fread(a, sizeof(double), 1, file);
 		fread(b, sizeof(double), 1, file);
 		fread(c, sizeof(double), 1, file);
+		fread(km, sizeof(double), 1, file);
 
 		/* read bulk */
 		size0 =  *n0 * *l0 * n_i;
@@ -132,6 +134,7 @@ void readBin( string filename, const int n_i,
 		fread(amo_r, sizeof(double), 1, file);
 		fread(slp, sizeof(double), 3, file);
 		fread(n_display, sizeof(double), 1, file);
+		fread(t_after, sizeof(double), 1, file);
 
 		fclose(file);
 

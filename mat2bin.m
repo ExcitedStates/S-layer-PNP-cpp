@@ -1,5 +1,5 @@
 function rst = mat2bin(tag, t, C, Ez, Er, Eq, Jz, Jr, Jq, charges, d_m, ... 
-    dqq, dx, dt, R, a, b, c,bulk, nz_amo, nr_amo, slp, n_display)
+    dqq, dx, dt, R, a, b, c, km, bulk, nz_amo, nr_amo, slp, n_display, t_after)
 
 rst = 1;
 
@@ -45,7 +45,7 @@ fwrite(fid, R, 'double');
 
 %% write coefficients
 
-data = [a, b, c];
+data = [a, b, c, km];
 fwrite(fid, data, 'double');
 
 %% write bulk
@@ -54,7 +54,7 @@ fwrite(fid, bulk, 'double');
 
 %% write misc.
 
-data = [nz_amo, nr_amo, slp, n_display];
+data = [nz_amo, nr_amo, slp, n_display, t_after];
 fwrite(fid, data, 'double');
 
 %% close file

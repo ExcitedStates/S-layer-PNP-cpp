@@ -1,9 +1,12 @@
 #include <mex.h>
 #include <matrix.h>
 #include <iostream>
-#include "solver_pnp3d.cpp"
 
 using namespace std;
+
+#include "solver_pnp3d.cpp"
+
+
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 
@@ -16,12 +19,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	double *dqq, *dx, *dt;
 	double *R;
 	double *a, *b, *c;
+	double *km;
 
 	double *bulk;
 	double *amo_z, *amo_r;
 	double *slp;
 
 	double *n_display;
+	double *t_after;
 
 	int m0, n0, l0, m1, n1, l1, m2, n2, l2, m3, n3, l3;
 	mwSize *dim0, *dim1, *dim2, *dim3;
@@ -77,15 +82,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	a = mxGetPr(prhs[13]);
 	b = mxGetPr(prhs[14]);
 	c = mxGetPr(prhs[15]);
+	km = mxGetPr(prhs[16]);
 
-	bulk = mxGetPr(prhs[16]);
+	bulk = mxGetPr(prhs[17]);
 
-	amo_z = mxGetPr(prhs[17]);
-	amo_r = mxGetPr(prhs[18]);
+	amo_z = mxGetPr(prhs[18]);
+	amo_r = mxGetPr(prhs[19]);
 
-	slp = mxGetPr(prhs[19]);
+	slp = mxGetPr(prhs[20]);
 
-	n_display  = mxGetPr(prhs[20]);
+	n_display  = mxGetPr(prhs[21]);
+	t_after  = mxGetPr(prhs[22]);
 
 
 
@@ -107,7 +114,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 
 		solver_pnp3d(C, Ez, Er, Eq, Jz, Jr, Jq,
 			m0, n0, l0, m1, n1, l1, m2, n2, l2, m3, n3, l3, z, d_m,
-			dqq, dx, dt, R, a, b, c, bulk, amo_z, amo_r, slp, n_display );
+			dqq, dx, dt, R, a, b, c, km, bulk, amo_z, amo_r, slp,
+			n_display, t_after );
 
 		/* copy results */
 

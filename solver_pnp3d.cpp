@@ -3,9 +3,12 @@ void solver_pnp3d(double *C, double *Ez, double *Er, double *Eq,
 	int m0, int n0, int l0, int m1, int n1, int l1,
 	int m2, int n2, int l2, int m3, int n3, int l3,
 	double *z, double *d_m, double *dqq, double *dx, double *dt, double *R,
-	double *a, double *b, double *c, double *bulk,
-	double *amo_z, double *amo_r, double *slp, double *n_display
+	double *a, double *b, double *c, double *km, double *bulk,
+	double *amo_z, double *amo_r, double *slp,
+	double *n_display, double *t_after
 	) {
+
+  bool reaction_off = true;
 
 	for (int t = 0; t < (int)*n_display; t++) {
 
@@ -286,21 +289,30 @@ void solver_pnp3d(double *C, double *Ez, double *Er, double *Eq,
 		}
 
 		/* reaction */
-
-		if (l0 > 1) {
-			for (int w = 0; w < l0; w++) {
-				C[ ((int)*amo_z-1) + ((int)*amo_r-1) * m0 + w*m0*n0 ]
-					-= *c * C[ ((int)*amo_z-1) + ((int)*amo_r-1) * m0 + w*m0*n0 ];
-	      if (C[ ((int)*amo_z-1) + ((int)*amo_r-1) * m0 + w*m0*n0 ] <= 0) {
-	      	C[ ((int)*amo_z-1) + ((int)*amo_r-1) * m0 + w*m0*n0 ] = 0;
+		if (t >= (int)*t_after) {
+			if (reaction_off) {
+				cout << "*********************************" << endl;
+				cout << "******  reaction is now on  *****" << endl;
+				cout << "*********************************" << endl;
+				reaction_off = false;
+			}
+			if (l0 > 1) {
+				for (int w = 0; w < l0; w++) {
+					C[ ((int)*amo_z-1) + ((int)*amo_r-1) * m0 + w*m0*n0 ]
+						-= *c * C[ ((int)*amo_z-1) + ((int)*amo_r-1) * m0 + w*m0*n0 ]
+						/ ( 1 + C[ ((int)*amo_z-1) + ((int)*amo_r-1) * m0 + w*m0*n0 ] / *km );
+		      if (C[ ((int)*amo_z-1) + ((int)*amo_r-1) * m0 + w*m0*n0 ] <= 0) {
+		      	C[ ((int)*amo_z-1) + ((int)*amo_r-1) * m0 + w*m0*n0 ] = 0;
+		      }
+				}
+			} else {
+				C[ ((int)*amo_z-1) + ((int)*amo_r-1) * m0 ]
+					-= *c * C[ ((int)*amo_z-1) + ((int)*amo_r-1) * m0 ]
+					/ ( 1 + C[ ((int)*amo_z-1) + ((int)*amo_r-1) * m0 ] / *km );
+	      if (C[ ((int)*amo_z-1) + ((int)*amo_r-1) * m0 ] <= 0) {
+	      	C[ ((int)*amo_z-1) + ((int)*amo_r-1) * m0 ] = 0;
 	      }
 			}
-		} else {
-			C[ ((int)*amo_z-1) + ((int)*amo_r-1) * m0 ]
-				-= *c * C[ ((int)*amo_z-1) + ((int)*amo_r-1) * m0 ];
-      if (C[ ((int)*amo_z-1) + ((int)*amo_r-1) * m0 ] <= 0) {
-      	C[ ((int)*amo_z-1) + ((int)*amo_r-1) * m0 ] = 0;
-      }
 		}
 
 	} // end for-t

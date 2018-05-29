@@ -46,12 +46,14 @@ int main(int argc, char *argv[]) {
 	double *dqq, *dx, *dt;
 	double *R;
 	double *a, *b, *c;
+	double *km;
 
 	double *bulk;
 	double *amo_z, *amo_r;
 	double *slp;
 
 	double *n_display;
+	double *t_after;
 
 	int m0, n0, l0, m1, n1, l1, m2, n2, l2, m3, n3, l3;
 	int t_offset;
@@ -84,16 +86,18 @@ int main(int argc, char *argv[]) {
 	a = new double;
 	b = new double;
 	c = new double;
+	km = new double;
 	bulk = new double[ 1 * n0 * l0 * n_i ];
 	amo_z = new double;
 	amo_r = new double;
 	slp = new double[3];
 	n_display = new double;
+	t_after = new double;
 
 	/* read all variables */
 	readBin( argv[1], n_i, C, Ez, Er, Eq, Jz, Jr, Jq,
 		&m0, &n0, &l0, &m1, &n1, &l1, &m2, &n2, &l2, &m3, &n3, &l3, z, d_m,
-	 	dqq, dx, dt, R, a, b, c, bulk , amo_z, amo_r, slp, n_display );
+	 	dqq, dx, dt, R, a, b, c, km, bulk , amo_z, amo_r, slp, n_display, t_after );
 
 	/* do the PNP business */
 	if (n_t < *n_display) {
@@ -107,8 +111,9 @@ int main(int argc, char *argv[]) {
 		t1 = std::time(0);
 		solver_pnp3d(C, Ez, Er, Eq, Jz, Jr, Jq,
 			m0, n0, l0, m1, n1, l1, m2, n2, l2, m3, n3, l3, z, d_m,
-			dqq, dx, dt, R, a, b, c, bulk, amo_z, amo_r, slp, n_display
+			dqq, dx, dt, R, a, b, c, km, bulk, amo_z, amo_r, slp, n_display, t_after
 		 	);
+		*t_after -= 1.0 * *n_display;
 		t2 = std::time(0);
 		t_eta = 0.1 * round( 10 * (t2-t0)/(t+1.0)*(n_tt-t-1.0));
 		cout << "step " << ((t+1) * *n_display) << " done in " << 0.1*round(10*(t2-t1)) << " s. ";

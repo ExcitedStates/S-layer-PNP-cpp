@@ -1,9 +1,10 @@
 % wriiten by Po-Nan Li @ Stanford for CS279 final project
-function [C, C0, c_convs, c_detector, Jr, Jz, Jq, Er, Ez, Eq] = pnp_cyn(varargin)
+function [C, C0, c_dtr, jz_dtr, c_detector, Jr, Jz, Jq, Er, Ez, Eq] = pnp_cyn(varargin)
 % sim_time, pnp, movie, kr, ex_sig, ey_sig, r_pore, c_nh4
 
-v3 = 1;
-mm = 0;
+v3 = 0;
+mm = 1;
+
 
 p = inputParser;
 p.addParameter('tag', 'results_pnp_cyn');
@@ -22,8 +23,9 @@ p.addParameter('sig', 0);
 p.addParameter('cont', 0);
 p.addParameter('dq', 10);
 p.addParameter('dt', 1e-12);
+p.addParameter('dx', 1e-10);
 p.addParameter('z_amo', 30e-9);
-p.addParameter('c_limit', 20e-9);
+p.addParameter('late_start', 0);
 p.parse(varargin{:});
 
 tag = p.Results.tag;
@@ -41,12 +43,14 @@ c_salt = p.Results.c_salt;
 cont = p.Results.cont;
 dq = p.Results.dq;
 dt = p.Results.dt;
+dx = p.Results.dx;
 z_amo = p.Results.z_amo;
-c_limit = p.Results.c_limit;
+late_start = p.Results.late_start;
+
 
 
 % dt = 1e-12; % ps
-dx = 1e-10; % Ang
+% dx = 1e-10; % Ang
 % dq = 10; % deg
 
 radius = 11e-9; % nm
@@ -78,6 +82,7 @@ n_q = round( qpie/dq );
 n_i = length(charges);
 n_t = round( sim_time/dt );
 
+t_after = round(late_start / dt);
 
 %% PNP-ANA
 
@@ -123,8 +128,10 @@ if pnp > 0 && ey_sig > 0
         Ez(1:nz_stop,:,:) = -repmat( flipud(Ey(1:nz_stop).'), [1 size(C,2) size(C,3)] );
         Ez((nz_sbtm+1):end,:,:) = repmat( Ey(1:(n_z-nz_sbtm+1)).', [1 size(C,2) size(C,3)] );
     else
-        Ez(1:nz_stop,nx_protein:end,:) = -repmat( flipud(Ey(1:nz_stop).'), [1 size(C,2)-(nx_protein-1) size(C,3)] );
-        Ez((nz_sbtm+1):end,nx_protein:end,:) = repmat( Ey(1:(n_z-nz_sbtm+1)).', [1 size(C,2)-(nx_protein-1) size(C,3)] );
+        Ez(1:nz_stop,nx_protein:end,:)...
+            = -repmat( flipud(Ey(1:nz_stop).'), [1 size(C,2)-(nx_protein-1) size(C,3)] );
+        Ez((nz_sbtm+1):end,nx_protein:end,:)...
+            = repmat( Ey(1:(n_z-nz_sbtm+1)).', [1 size(C,2)-(nx_protein-1) size(C,3)] );
     end
 end
 
@@ -142,9 +149,12 @@ if pnp > 0 && ex_sig > 0
     Er(nz_stop:nz_sbtm, 1:(nx_protein-1), :) = ...
         -repmat( fliplr(Ey(1:(nx_protein-1))), [(nz_sbtm-nz_stop+1) 1 size(C,3)])...
         +repmat( (Ey((nx_protein-1):(2*nx_protein-3))), [(nz_sbtm-nz_stop+1) 1 size(C,3)]);
-    C(nz_stop:nz_sbtm, 1:(nx_protein-1), :, 1) = 1000*repmat(fliplr(C_nh4(1:(nx_protein-1))), [(nz_sbtm-nz_stop+1) 1 size(C,3)]);
-    C(nz_stop:nz_sbtm, 1:(nx_protein-1), :, 2) = 1000*repmat(fliplr(C_cl(1:(nx_protein-1))), [(nz_sbtm-nz_stop+1) 1 size(C,3)]);
-    C(nz_stop:nz_sbtm, 1:(nx_protein-1), :, 3) = 1000*repmat(fliplr(C_na(1:(nx_protein-1))), [(nz_sbtm-nz_stop+1) 1 size(C,3)]);
+    C(nz_stop:nz_sbtm, 1:(nx_protein-1), :, 1)...
+        = 1000*repmat(fliplr(C_nh4(1:(nx_protein-1))), [(nz_sbtm-nz_stop+1) 1 size(C,3)]);
+    C(nz_stop:nz_sbtm, 1:(nx_protein-1), :, 2)...
+        = 1000*repmat(fliplr(C_cl(1:(nx_protein-1))), [(nz_sbtm-nz_stop+1) 1 size(C,3)]);
+    C(nz_stop:nz_sbtm, 1:(nx_protein-1), :, 3)...
+        = 1000*repmat(fliplr(C_na(1:(nx_protein-1))), [(nz_sbtm-nz_stop+1) 1 size(C,3)]);
 end
 
 C(nz_stop:nz_sbtm, nx_protein:end, :, :) = 0;
@@ -168,7 +178,8 @@ C_top = C(1,:,:,:);
 %% ready to run
 
 C0 = C;
-filename = [tag '_' int0str(kr,4) '_' int0str(1e4*ex_sig,5) '_' int0str(1e4*ey_sig,5) '_' int0str(1e11*r_pore, 4) '_' int0str(1e9*c_nh4, 6)];
+filename = [tag '_' int0str(kr,4) '_' int0str(1e4*ex_sig,5) '_' ...
+    int0str(1e4*ey_sig,5) '_' int0str(1e11*r_pore, 4) '_' int0str(1e9*c_nh4, 6)];
 
 disp(filename);
 
@@ -180,11 +191,9 @@ c = kr * dt / km / (6e23) / (0.25*dx^3*pi);
         
 rst = mat2bin( filename, 0, C, Ez, Er, Eq, Jz, Jr, Jq, ...
                   charges, d_m, dqq, dx, dt, R, ...
-                  a, b, c, C0(1,:,:,:), nz_amo, 1, ...
-                  [nz_stop, nz_sbtm, nx_protein], n_display);
+                  a, b, c, km, C0(1,:,:,:), nz_amo, 1, ...
+                  [nz_stop, nz_sbtm, nx_protein], n_display, t_after);
               
-rst
-
 %% a continued run?
 
 if cont && exist([filename '.mat'], 'file') == 2
@@ -228,30 +237,33 @@ if enable_mex
     
         a = (dt*faraday/eps);
         b = faraday/rc/tmp;
-        c = kr * dt / km / (6e23) / (0.25*dx^3*pi);
+        c = kr * dt / (6e23) / (0.25*dx^3*pi) / km;
+        
 
         [C, Ez, Er, Eq, Jz, Jr, Jq]...
                 = mex_pnp3d( C, Ez, Er, Eq, Jz, Jr, Jq, ...
                   charges, d_m, dqq, dx, dt, R, ...
-                  a, b, c, ...
+                  a, b, c, km, ...
                   C0(1,:,:,:), ...
                   nz_amo, 1, [nz_stop, nz_sbtm, nx_protein], ...
-                  n_display);
+                  n_display, t_after);
               
-        c_dtr(:,tt+tt_offset) = squeeze( C(300,1,1,:) );
-        jz_dtr(:,tt+tt_offset) = squeeze( Jz(201,1,1,:) );
+        t_after = t_after - n_display;
+              
+        c_dtr(:,tt+tt_offset) = squeeze( C(nz_amo,1,1,:) );
+        jz_dtr(:,tt+tt_offset) = squeeze( Jz(round((n_z+1)/2),1,1,:) );
               
         t_now = toc;
         t = tt*n_display;
         eta = t_now/t * (n_t-t);
         disp([num2str(round(1000*t/n_t)/10) '% done, ' num2str(round(eta)) 's to go...']);
         
-        if mod(t, 500000) == 0
-        disp('saving intermediate file');
-            save([filename '_t' int0str(t+t_offset, 7)  '.mat'], ...
-              'C', 'Ez', 'Er', 'Jz', 'Jr', 'c_dtr', 'jz_dtr', ...
-              '-v7.3');
-        end  
+%         if mod(t, 500000) == 0
+%         disp('saving intermediate file');
+%             save([filename '_t' int0str(t+t_offset, 7)  '.mat'], ...
+%               'C', 'Ez', 'Er', 'Jz', 'Jr', 'c_dtr', 'jz_dtr', ...
+%               '-v7.3');
+%         end  
     end
     
     save(filename, ...
@@ -278,7 +290,8 @@ else
             Jz(1:(end-1),:,:,k) = -d_m(k)/dx * diff( [C_top(:,:,:,k); C(:,:,:,k)], 1, 1 )...
                 + 1*(faraday/rc/tmp) * d_m(k) * charges(k) * ...
                 0.5 * ( [C_top(:,:,:,k); C(1:(end-1),:,:,k)] + C(1:end,:,:,k) ) .* Ez(1:(end-1),:,:);
-            Jq(:,2:end,:,k) = -d_m(k)/dqq * diff( cat(3, C(:,2:end,end,k), C(:,2:end,:,k), C(:,2:end,1,k)), 1, 3 ) ./ R(:,2:end,:)...
+            Jq(:,2:end,:,k) = ...
+                -d_m(k)/dqq * diff( cat(3, C(:,2:end,end,k), C(:,2:end,:,k), C(:,2:end,1,k)), 1, 3 ) ./ R(:,2:end,:)...
                 + 1*(faraday/rc/tmp) * d_m(k) * charges(k) ...
                 * 0.5 * ( cat(3, C(:,2:end,end,k), C(:,2:end,:,k)) + cat(3, C(:,2:end,:,k), C(:,2:end,1,k)) ) ...
                 .* Eq(:,2:end,:);
@@ -290,24 +303,32 @@ else
         % update C
         
         % dC^2/dr^2
-        C(:,1:end,:,:) = C(:,1:end,:,:) - dt/dx * diff([-Jr(:,1,:,:) Jr(:,1:end,:,:)], 1, 2 );
+        C(:,1:end,:,:) = ...
+            C(:,1:end,:,:) - dt/dx * diff([-Jr(:,1,:,:) Jr(:,1:end,:,:)], 1, 2 );
         % dC/dr
         C(:,1,:,:) =  C(:,1,:,:) -  dt/dx * 2 * Jr(:,1,:,:);
-        C(:,2:end,:,:) = C(:,2:end,:,:) - 0.5 * dt * R(:,2:end,2:end).^(-1) .* ( Jr(:,1:(end-1),:,:) + Jr(:,2:end,:,:) );
+        C(:,2:end,:,:) = ...
+            C(:,2:end,:,:) - 0.5 * dt * R(:,2:end,2:end).^(-1) ...
+            .* ( Jr(:,1:(end-1),:,:) + Jr(:,2:end,:,:) );
         % dC^2/dz^2
         C(:,:,:,:) = C(:,:,:,:) - dt/dx * diff( Jz(:,:,:,:), 1, 1 );
         % dC^2/dq^2
-        C(:,2:end,:,:) = C(:,2:end,:,:) - dt/dqq * diff( Jq(:,2:end,:,:), 1, 3 ) ./ repmat( R(:,2:end,2:end), [1 1 1 n_i]);
+        C(:,2:end,:,:) = ...
+            C(:,2:end,:,:) - dt/dqq * diff( Jq(:,2:end,:,:), 1, 3 ) ...
+            ./ repmat( R(:,2:end,2:end), [1 1 1 n_i]);
 
         C( C < 0 ) = 0;
 
         % reaction
-        if mm == 1
-            C(nz_amo, 1, :, 1) = C(nz_amo, 1, :, 1) ...
-                - abs(kr * dt / (6e23) / (0.25*dx^3*pi) * C(nz_amo, 1, :, 1) ...
-                / ( 1 + C(nz_amo, 1, :, 1) / km  ) ); 
-        else
-            C(nz_amo, 1, :, 1) = C(nz_amo, 1, :, 1) - kr * dt / km / (6e23) / (0.25*dx^3*pi) * C(nz_amo, 1, :, 1); 
+        if t > t_after
+            if mm == 1
+                C(nz_amo, 1, :, 1) = C(nz_amo, 1, :, 1) ...
+                    - abs(kr/km * dt / (6e23) / (0.25*dx^3*pi) * C(nz_amo, 1, :, 1) ...
+                    / ( 1 + C(nz_amo, 1, :, 1) / km  ) ); 
+            else
+                C(nz_amo, 1, :, 1) = ...
+                    C(nz_amo, 1, :, 1) - kr * dt / km / (6e23) / (0.25*dx^3*pi) * C(nz_amo, 1, :, 1); 
+            end
         end
 
         % stats
