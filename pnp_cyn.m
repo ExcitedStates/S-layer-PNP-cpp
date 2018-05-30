@@ -182,7 +182,8 @@ C_top = C(1,:,:,:);
 
 C0 = C;
 filename = [tag '_' int0str(kr,4) '_' int0str(1e4*ex_sig,5) '_' ...
-    int0str(1e4*ey_sig,5) '_' int0str(1e11*r_pore, 4) '_' int0str(1e9*c_nh4, 6)];
+    int0str(1e4*ey_sig,5) '_' int0str(1e11*r_pore, 4) '_' ...
+    int0str(1e9*c_nh4, 6) '_' int0str(1e6*kd, 4)];
 
 disp(filename);
 
@@ -355,7 +356,7 @@ else
             disp([num2str(0.1*round(10*eta)) 's to go']);
         end
     end
-    save(filename, ...
+    save([filename '.mat'], ...
     'C', 'J*', 'E*', 'C0', 'sim_time', 'dx', 'dt', 'c_convs', 'c_detector');
 
 end 
