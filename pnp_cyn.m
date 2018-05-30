@@ -26,6 +26,7 @@ p.addParameter('dt', 1e-12);
 p.addParameter('dx', 1e-10);
 p.addParameter('z_amo', 30e-9);
 p.addParameter('late_start', 0);
+p.addParameter('kd', 133e-9);
 p.parse(varargin{:});
 
 tag = p.Results.tag;
@@ -46,6 +47,7 @@ dt = p.Results.dt;
 dx = p.Results.dx;
 z_amo = p.Results.z_amo;
 late_start = p.Results.late_start;
+kd = p.Results.kd;
 
 
 
@@ -62,6 +64,7 @@ thick_slayer = 4.5e-9;
 z_slayer = 20e-9;
 % kr = 10; % 10 / sec
 km = 133e-9 * 1000; 
+kd = kd * 1000;
 e_c = 1.602e-19; % elementary charge in C
 avo = 6.022e23;
 rc = 8.31446; % reaction constant
@@ -237,13 +240,13 @@ if enable_mex
     
         a = (dt*faraday/eps);
         b = faraday/rc/tmp;
-        c = kr * dt / (6e23) / (0.25*dx^3*pi) / km;
+        c = kr * dt / (6e23) / (0.25*dx^3*pi) / kd;
         
 
         [C, Ez, Er, Eq, Jz, Jr, Jq]...
                 = mex_pnp3d( C, Ez, Er, Eq, Jz, Jr, Jq, ...
                   charges, d_m, dqq, dx, dt, R, ...
-                  a, b, c, km, ...
+                  a, b, c, km, kd, ...
                   C0(1,:,:,:), ...
                   nz_amo, 1, [nz_stop, nz_sbtm, nx_protein], ...
                   n_display, t_after);
@@ -323,7 +326,7 @@ else
         if t > t_after
             if mm == 1
                 C(nz_amo, 1, :, 1) = C(nz_amo, 1, :, 1) ...
-                    - abs(kr/km * dt / (6e23) / (0.25*dx^3*pi) * C(nz_amo, 1, :, 1) ...
+                    - abs(kr/kd * dt / (6e23) / (0.25*dx^3*pi) * C(nz_amo, 1, :, 1) ...
                     / ( 1 + C(nz_amo, 1, :, 1) / km  ) ); 
             else
                 C(nz_amo, 1, :, 1) = ...
