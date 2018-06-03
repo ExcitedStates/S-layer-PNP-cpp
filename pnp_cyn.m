@@ -7,12 +7,10 @@ mm = 1;
 
 
 p = inputParser;
-p.addParameter('tag', 'results_pnp_cyn');
-p.addParameter('enable_mex', 1);
-p.addParameter('n_display', 10000);
+p.addParameter('tag', 'test');
+p.addParameter('enable_mex', 0);
+p.addParameter('n_display', 1);
 p.addParameter('sim_time', 5e-6);
-p.addParameter('pnp', 1);
-p.addParameter('movie', 0);
 p.addParameter('kr', 10);
 p.addParameter('ex_sig', 0);
 p.addParameter('ey_sig', 0);
@@ -27,14 +25,14 @@ p.addParameter('dx', 1e-10);
 p.addParameter('z_amo', 30e-9);
 p.addParameter('late_start', 0);
 p.addParameter('kd', 133e-9);
+p.addParameter('make_pnl', 0);
+p.addParameter('save_intermediate', 0);
 p.parse(varargin{:});
 
 tag = p.Results.tag;
 enable_mex = p.Results.enable_mex;
 n_display = p.Results.n_display;
 sim_time = p.Results.sim_time;
-pnp = p.Results.pnp;
-movie = p.Results.movie;
 kr = p.Results.kr;
 ex_sig = p.Results.ex_sig;
 ey_sig = p.Results.ey_sig;
@@ -48,20 +46,15 @@ dx = p.Results.dx;
 z_amo = p.Results.z_amo;
 late_start = p.Results.late_start;
 kd = p.Results.kd;
-
-
+make_pnl = p.Results.make_pnl;
+save_intermediate = p.Results.save_intermediate;
 
 % dt = 1e-12; % ps
 % dx = 1e-10; % Ang
 % dq = 10; % deg
-
-radius = 11e-9; % nm
 height = 40e-9; % nm
-qpie = dq; % deg
 % z_amo = 30e-9;
 % r_pore = 6.5e-10;
-thick_slayer = 4.5e-9;
-z_slayer = 20e-9;
 % kr = 10; % 10 / sec
 km = 133e-9 * 1000; 
 kd = kd * 1000;
@@ -79,130 +72,27 @@ d_na  = 1.33e-9; % m^2/s
 d_nacl = 1.61e-9; % m^2/s
 
 d_m = [d_nh4 d_cl d_na];
-n_r = floor( radius/dx + 1);
 n_z = round( height/dx );
-n_q = round( qpie/dq );
 n_i = length(charges);
 n_t = round( sim_time/dt );
 
 t_after = round(late_start / dt);
 
-%% PNP-ANA
+%% filename
 
-% ey
-
-sig = ey_sig;
-[C_pls, C_min, Ey, ~] = pnp_ana(c_salt, sig, dx, n_z);
-
-C_nh4 = (c_nh4/c_salt) * C_pls;
-C_na = (c_salt-c_nh4) / c_salt * C_pls;
-C_cl = C_min;
-
-C = c_salt * 1000 * ones( n_z, n_r, n_q, n_i );
-C(:,:,:,1) = 1000 * c_nh4;
-Jr = zeros( n_z, n_r, n_q, n_i );
-Jz = zeros( n_z+1, n_r, n_q, n_i );
-Jq = zeros( n_z, n_r, n_q+1, n_i );
-Er = zeros( n_z, n_r, n_q );
-Ez = zeros( n_z+1, n_r, n_q );
-Eq = zeros( n_z, n_r, n_q+1 );
-c_convs = zeros(1,n_t);
-c_detector = zeros(n_i, n_t);
-
-
-nx_protein = round( r_pore / dx ) + 1;
-nz_stop = round( (z_slayer - thick_slayer/2)/dx );
-nz_sbtm = round( (z_slayer + thick_slayer/2)/dx );
-
-
-if pnp > 0 && ey_sig > 0
-
-    C(1:(nz_stop-1),:,:,1) = 1000*repmat( flipud( C_nh4(1:(nz_stop-1)).'), [1 size(C,2) size(C,3) 1] );
-    C(1:(nz_stop-1),:,:,2) = 1000*repmat( flipud( C_cl(1:(nz_stop-1)).'), [1 size(C,2) size(C,3) 1] );
-    C(1:(nz_stop-1),:,:,3) = 1000*repmat( flipud( C_na(1:(nz_stop-1)).'), [1 size(C,2) size(C,3) 1] );
-    C((nz_sbtm+1):end,:,:,1) = 1000*repmat( ( C_nh4(1:(n_z - nz_sbtm)).'), [1 size(C,2) size(C,3) 1] );
-    C((nz_sbtm+1):end,:,:,2) = 1000*repmat( ( C_cl(1:(n_z - nz_sbtm)).'), [1 size(C,2) size(C,3) 1] );
-    C((nz_sbtm+1):end,:,:,3) = 1000*repmat( ( C_na(1:(n_z - nz_sbtm)).'), [1 size(C,2) size(C,3) 1] );
-    C(nz_stop:nz_sbtm, 1:(nx_protein-1), :, 1) = 1000*C_nh4(1);
-    C(nz_stop:nz_sbtm, 1:(nx_protein-1), :, 2) = 1000*C_cl(1);
-    C(nz_stop:nz_sbtm, 1:(nx_protein-1), :, 3) = 1000*C_na(1);
-    
-    if v3 == 1
-        Ez(1:nz_stop,:,:) = -repmat( flipud(Ey(1:nz_stop).'), [1 size(C,2) size(C,3)] );
-        Ez((nz_sbtm+1):end,:,:) = repmat( Ey(1:(n_z-nz_sbtm+1)).', [1 size(C,2) size(C,3)] );
-    else
-        Ez(1:nz_stop,nx_protein:end,:)...
-            = -repmat( flipud(Ey(1:nz_stop).'), [1 size(C,2)-(nx_protein-1) size(C,3)] );
-        Ez((nz_sbtm+1):end,nx_protein:end,:)...
-            = repmat( Ey(1:(n_z-nz_sbtm+1)).', [1 size(C,2)-(nx_protein-1) size(C,3)] );
-    end
-end
-
-% ex
-
-sig = ex_sig;
-[C_pls, C_min, Ey, ~] = pnp_ana(c_salt, sig, dx, n_z);
-
-C_nh4 = (c_nh4/c_salt) * C_pls;
-C_na = (c_salt-c_nh4) / c_salt * C_pls;
-C_cl = C_min;
-
-
-if pnp > 0 && ex_sig > 0
-    Er(nz_stop:nz_sbtm, 1:(nx_protein-1), :) = ...
-        -repmat( fliplr(Ey(1:(nx_protein-1))), [(nz_sbtm-nz_stop+1) 1 size(C,3)])...
-        +repmat( (Ey((nx_protein-1):(2*nx_protein-3))), [(nz_sbtm-nz_stop+1) 1 size(C,3)]);
-    C(nz_stop:nz_sbtm, 1:(nx_protein-1), :, 1)...
-        = 1000*repmat(fliplr(C_nh4(1:(nx_protein-1))), [(nz_sbtm-nz_stop+1) 1 size(C,3)]);
-    C(nz_stop:nz_sbtm, 1:(nx_protein-1), :, 2)...
-        = 1000*repmat(fliplr(C_cl(1:(nx_protein-1))), [(nz_sbtm-nz_stop+1) 1 size(C,3)]);
-    C(nz_stop:nz_sbtm, 1:(nx_protein-1), :, 3)...
-        = 1000*repmat(fliplr(C_na(1:(nx_protein-1))), [(nz_sbtm-nz_stop+1) 1 size(C,3)]);
-end
-
-C(nz_stop:nz_sbtm, nx_protein:end, :, :) = 0;
-
-
-nz_amo = round(z_amo/dx);
-
-if movie == 1
-    figure(999);
-end
-
-r = 0:(size(C,2)-1);
-R = dx * repmat(r, [size(C,1) 1 (size(C,3)+1) 1]);
-dqq = pi/180 * dq;
-
-%% BCs
-
-C_top = C(1,:,:,:);
-
-
-%% ready to run
-
-C0 = C;
 filename = [tag '_' num2sci(kr) '_' num2sci(ex_sig) '_' ...
     num2sci(ey_sig) '_' num2sci(r_pore) '_' ...
     num2sci(c_nh4) '_' num2sci(1e-3*kd)];
-
 disp(filename);
 
-%% test mat2bin
+%% get initial profiles
 
-a = (dt*faraday/eps);
-b = faraday/rc/tmp;
-c = kr * dt / kd  / (6e23) / (0.25*dx^3*pi);
-        
-rst = mat2bin( ['../pnp12/' filename], 0, C, Ez, Er, Eq, Jz, Jr, Jq, ...
-                  charges, d_m, dqq, dx, dt, R, ...
-                  a, b, c, km, C0(1,:,:,:), nz_amo, 1, ...
-                  [nz_stop, nz_sbtm, nx_protein], n_display, t_after);
-              
-%% a continued run?
-
+[C, Jr, Jz, Jq, Er, Ez, Eq, slp] = pnp_cyn_init('ex_sig', ex_sig, ...
+    'ey_sig', ey_sig, 'r_pore', r_pore, 'c_nh4', c_nh4, 'c_salt', c_salt, ...
+    'dq', dq, 'dx', dx);
 if cont && exist([filename '.mat'], 'file') == 2
     sim_time0 = sim_time;
-    load(filename);
+    load(filename, 'C', 'J*', 'E*', 'C0', 'sim_time', 'dx', 'dt', 'c_convs', 'c_detector');
     sim_time = sim_time + sim_time0;
     disp([filename ' loaded']);
     disp([num2str(sim_time-sim_time0) 's ran, ' num2str(sim_time0) 's to go']);
@@ -214,7 +104,29 @@ else
     cont = 0;
 end
     
+nz_amo = round(z_amo/dx);
+r = 0:(size(C,2)-1);
+R = dx * repmat(r, [size(C,1) 1 (size(C,3)+1) 1]);
+dqq = pi/180 * dq;
 
+%% BCs
+
+C_top = C(1,:,:,:);
+C0 = C;
+
+%% coefficients for MEX or C++ solver
+
+a = (dt*faraday/eps);
+b = faraday/rc/tmp;
+c = kr * dt / kd  / (6e23) / (0.25*dx^3*pi);
+
+if make_pnl
+    mat2bin( ['../pnp12/' filename], 0, C, Ez, Er, Eq, Jz, Jr, Jq, ...
+        charges, d_m, dqq, dx, dt, R, a, b, c, km, C0(1,:,:,:), nz_amo, 1, ...
+        slp, n_display, t_after);
+    return;
+end
+              
 %% solver
 
 tic;
@@ -242,18 +154,16 @@ if enable_mex
         a = (dt*faraday/eps);
         b = faraday/rc/tmp;
         c = kr * dt / (6e23) / (0.25*dx^3*pi) / kd;
-        
 
         [C, Ez, Er, Eq, Jz, Jr, Jq]...
                 = mex_pnp3d( C, Ez, Er, Eq, Jz, Jr, Jq, ...
                   charges, d_m, dqq, dx, dt, R, ...
                   a, b, c, km, ...
                   C0(1,:,:,:), ...
-                  nz_amo, 1, [nz_stop, nz_sbtm, nx_protein], ...
+                  nz_amo, 1, slp, ...
                   n_display, t_after);
               
-        t_after = t_after - n_display;
-              
+        t_after = t_after - n_display;     
         c_dtr(:,tt+tt_offset) = squeeze( C(nz_amo,1,1,:) );
         jz_dtr(:,tt+tt_offset) = squeeze( Jz(round((n_z+1)/2),1,1,:) );
               
@@ -262,19 +172,20 @@ if enable_mex
         eta = t_now/t * (n_t-t);
         disp([num2str(round(1000*t/n_t)/10) '% done, ' num2str(round(eta)) 's to go...']);
         
-%         if mod(t, 500000) == 0
-%         disp('saving intermediate file');
-%             save([filename '_t' int0str(t+t_offset, 7)  '.mat'], ...
-%               'C', 'Ez', 'Er', 'Jz', 'Jr', 'c_dtr', 'jz_dtr', ...
-%               '-v7.3');
-%         end  
+        if mod(t, save_intermediate) == 0
+            disp('saving intermediate file');
+                save([filename '_t' int0str(t+t_offset, 7)  '.mat'], ...
+                  'C', 'Ez', 'Er', 'Jz', 'Jr', 'c_dtr', 'jz_dtr', '-v7.3');
+        end  
     end
     
-    save(filename, ...
+    save([filename '.mat'], ...
     'C', 'J*', 'E*', 'C0', 'sim_time', 'dx', 'dt', 'c_dtr', 'jz_dtr');
     
 else
-
+    nz_stop = slp(1);
+    nz_sbtm = slp(2);
+    nx_protein = slp(3);
     for t = 1:n_t
         
         Cprev = C;
@@ -339,17 +250,7 @@ else
         c_conv = sum(abs(Cprev(:)-C(:))) / sum(abs(Cprev(:)));
         c_convs(t) = c_conv;
         c_detector(:,t) = 1e6*squeeze( C(nz_amo, 1, 1, :) );
-        if movie == 1 && mod(t,10) == 0
-            q_slide = 1;
-            imagesc( 1e6 * [fliplr(C(:,2:end,q_slide,1)) C(:,:,q_slide,1)] );
-            axis image;
-            axis off;
-            colormap(jet);
-            colorbar;
-            caxis([0 20]);
-            title(['step ' num2str(t) ' / ' num2str(n_t) ', conv = ' num2str(c_conv,2)]);
-            pause(0.001);
-        end
+
         dtime = toc;
         eta = dtime / t * (n_t-t);
         if mod(t,n_display) == 0
