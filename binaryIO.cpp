@@ -131,10 +131,15 @@ void readBin( string filename, const int n_i,
 
 		/* read misc. */
 		fread(amo_z, sizeof(double), 1, file);
+        cout << "amo_z = " << *amo_z << endl;
 		fread(amo_r, sizeof(double), 1, file);
+        cout << "amo_r = " << *amo_r << endl;
 		fread(slp, sizeof(double), 3, file);
+        cout << "slp = " << slp[0] << ", " << slp[1] << ", " << slp[2] << endl;
 		fread(n_display, sizeof(double), 1, file);
+        cout << "n_display = " << *n_display << endl;
 		fread(t_after, sizeof(double), 1, file);
+        cout << "t_after = " << *t_after << endl;
 
 		fclose(file);
 

@@ -2,9 +2,7 @@
 function [C, C0, c_dtr, jz_dtr, c_detector, Jr, Jz, Jq, Er, Ez, Eq] = pnp_cyn(varargin)
 % sim_time, pnp, movie, kr, ex_sig, ey_sig, r_pore, c_nh4
 
-v3 = 0;
 mm = 1;
-
 
 p = inputParser;
 p.addParameter('tag', 'test');
