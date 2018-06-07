@@ -80,7 +80,7 @@ t_after = round(late_start / dt);
 
 filename = [tag '_' num2sci(kr) '_' num2sci(ex_sig) '_' ...
     num2sci(ey_sig) '_' num2sci(r_pore) '_' ...
-    num2sci(c_nh4) '_' num2sci(1e-3*kd)];
+    num2sci(c_nh4) '_' num2sci(1e-3*kd) '_' num2sci(z_amo) '_' num2sci(r_pore)];
 disp(filename);
 
 %% get initial profiles
